@@ -1,11 +1,14 @@
 package com.example.library.security;
 
 
+import com.example.library.service.LibroService;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -20,7 +23,7 @@ import java.util.stream.Collectors;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-
+    public  static final Logger logger = LoggerFactory.getLogger(LoggerFactory.class);
     private final JwtUtil jwtUtil;
 
     public JwtAuthenticationFilter(JwtUtil jwtUtil) {
@@ -32,8 +35,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain)
             throws ServletException, IOException {
-        System.out.println("[Filtro JWT] Entrando al filtro...");
-        System.out.println("[Filtro JWT] Header: " + request.getHeader(HttpHeaders.AUTHORIZATION));
+        logger.info("[Filtro JWT] Entrando al filtro...");
+        logger.info("[Filtro JWT] Header: " + request.getHeader(HttpHeaders.AUTHORIZATION));
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
@@ -52,15 +55,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         List<SimpleGrantedAuthority> authorities = roles.stream()
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
-        System.out.println("Authorities: " + authorities);
+        logger.info("Authorities: " + authorities);
 
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
                 username, null, authorities
         );
         auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-        System.out.println("[Filtro JWT] Username extraído: " + username);
-        System.out.println("[Filtro JWT] Roles extraídos: " + roles);
-        System.out.println("[Filtro JWT] Authorities: " + authorities);
+        logger.info("[Filtro JWT] Username extraído: " + username);
+        logger.info("[Filtro JWT] Roles extraídos: " + roles);
+        logger.info("[Filtro JWT] Authorities: " + authorities);
         SecurityContextHolder.getContext().setAuthentication(auth);
 
         filterChain.doFilter(request, response);

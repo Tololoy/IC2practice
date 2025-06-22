@@ -59,4 +59,12 @@ public class JwtUtil {
                 .parseClaimsJws(token)
                 .getBody();
     }
+    public String generateRefreshToken(String username){
+        return Jwts.builder()
+                .setSubject(username)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + 604800000)) // 7 días
+                .signWith(key)
+                .compact();
+    }
 }

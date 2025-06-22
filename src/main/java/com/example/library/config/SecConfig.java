@@ -25,11 +25,16 @@ public class SecConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtFilter) throws Exception{
         http.csrf(AbstractHttpConfigurer::disable);
         http.authorizeHttpRequests(auth -> {
-            auth.requestMatchers("/h2-console/**").permitAll();
-            auth.requestMatchers("/auth/login").permitAll();
-            auth.requestMatchers("/admin").hasRole("ADMIN");
-            auth.requestMatchers("/user").hasRole("USER");
-            auth.requestMatchers("/").permitAll();
+            auth.requestMatchers(
+                    "/swagger-ui/**",          // UI
+                    "/v3/api-docs/**",         // JSON docs
+                    "/swagger-resources/**",   // Recursos internos Swagger
+                    "/h2-console/**",          // Consola H2 si la usas
+                    "/auth/login",
+                    "/auth/refresh"
+            ).permitAll();
+            auth.requestMatchers("/admin").hasAuthority("ROLE_ADMIN");
+            auth.requestMatchers("/user").hasAuthority("ROLE_USER");
             auth.anyRequest().authenticated();
         });
         //http.httpBasic(Customizer.withDefaults());

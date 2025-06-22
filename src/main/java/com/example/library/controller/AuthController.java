@@ -2,6 +2,7 @@ package com.example.library.controller;
 
 import com.example.library.dto.LoginRequest;
 import com.example.library.dto.LoginResponse;
+import com.example.library.repository.UsuarioRepository;
 import com.example.library.security.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +26,8 @@ import java.util.stream.Collectors;
 public class AuthController {
     @Autowired
     private AuthenticationManager authenticationManager;
-
+    @Autowired
+    private UsuarioRepository usuarioRepository;
     @Autowired
     private JwtUtil jwtUtil;
 
@@ -41,11 +43,25 @@ public class AuthController {
                     .toList();
             // Generar token
             String token = jwtUtil.generateToken(request.getUsername(),roles);
+            String refreshToken= jwtUtil.generateRefreshToken(request.getUsername());
             //Devolver respuesta
-            return ResponseEntity.ok(new LoginResponse(request.getUsername(),roles,token));
+            return ResponseEntity.ok(new LoginResponse(request.getUsername(),roles,token,refreshToken));
         }catch (AuthenticationException e){
             return ResponseEntity.status(401).body("Credenciales invalidas");
         }
+    }
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refreshToken(@RequestBody Map<String,String> body){
+        String refreshToken=body.get("refreshToken");
+        if(!jwtUtil.validateToken(refreshToken)){
+            return ResponseEntity.status(401).body("Invalid Refresh Token");
+        }
+        String username=jwtUtil.getUsernameFromToken(refreshToken);
+        List<String> roles=usuarioRepository.findByUsername(username)
+                .map(u->List.of(u.getRol()))
+                .orElse(List.of());
+        String newAccessToken=jwtUtil.generateToken(username,roles);
+        return ResponseEntity.ok(Map.of("accessToken",newAccessToken));
     }
 
     /*@PostMapping("/login")
